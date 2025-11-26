@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suivi des prélèvements automatiques">
+    <meta name="theme-color" content="#4F46E5">
+    <title>Mes Prélèvements</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #EFF6FF 0%, #E0E7FF 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            color: #1F2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header .icon {
+            color: #4F46E5;
+        }
+        
+        .header p {
+            color: #6B7280;
+            font-size: 0.875rem;
+        }
+        
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+        
+        .summary-card p:first-child {
+            font-size: 0.75rem;
+            color: #6B7280;
+            margin-bottom: 0.25rem;
+        }
+        
+        .summary-card p:last-child {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .total { color: #1F2937; }
+        .paid { color: #10B981; }
+        .remaining { color: #F59E0B; }
+        
+        .form-container {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+        
+        .form-container h2 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #1F2937;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+        
+        .btn-secondary {
+            background: #E5E7EB;
+            color: #374151;
+            padding: 0.75rem 1rem;
+        }
+        
+        .btn-secondary:hover {
+            background: #D1D5DB;
+        }
+        
+        .btn-add {
+            width: 100%;
+            background: #4F46E5;
+            color: white;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn-add:hover {
+            background: #4338CA;
+        }
+        
+        .prelevement-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .prelevement-item {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s;
+        }
+        
+        .prelevement-item.paid {
+            opacity: 0.6;
+        }
+        
+        .checkbox {
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid #D1D5DB;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        
+        .checkbox:hover {
+            border-color: #4F46E5;
+        }
+        
+        .checkbox.checked {
+            background: #10B981;
+            border-color: #10B981;
+            color: white;
+        }
+        
+        .prelevement-info {
+            flex: 1;
+        }
+        
+        .prelevement-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1F2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .prelevement-name.paid {
+            text-decoration: line-through;
+            color: #6B7280;
+        }
+        
+        .badge {
+            font-size: 0.75rem;
+            background: #FEE2E2;
+            color: #DC2626;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .prelevement-details {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: #6B7280;
+            margin-top: 0.25rem;
+        }
+        
+        .prelevement-amount {
+            font-weight: 600;
+            color: #4F46E5;
+        }
+        
+        .prelevement-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background: transparent;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon.edit {
+            color: #3B82F6;
+        }
+        
+        .btn-icon.edit:hover {
+            background: #EFF6FF;
+        }
+        
+        .btn-icon.delete {
+            color: #EF4444;
+        }
+        
+        .btn-icon.delete:hover {
+            background: #FEE2E2;
+        }
+        
+        .empty-state {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            text-align: center;
+            color: #6B7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i data-lucide="euro"></i>
+                Mes Prélèvements
+            </h1>
+            <p id="current-month"></p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <p>Total mensuel</p>
+                <p class="total"><span id="total-month">0.00</span>€</p>
+            </div>
+            <div class="summary-card">
+                <p>Déjà payé</p>
+                <p class="paid"><span id="total-paid">0.00</span>€</p>
+            </div>
+            <div class="summary-card">
+                <p>À venir</p>
+                <p class="remaining"><span id="total-remaining">0.00</span>€</p>
+            </div>
+        </div>
+
+        <div class="form-container" id="form-container">
+            <h2 id="form-title">Nouveau prélèvement</h2>
+            <div class="form-group">
+                <input type="text" id="input-nom" placeholder="Nom (ex: EDF, Netflix...)">
+            </div>
+            <div class="form-group">
+                <input type="number" step="0.01" id="input-montant" placeholder="Montant (€)">
+            </div>
+            <div class="form-group">
+                <input type="number" min="1" max="31" id="input-jour" placeholder="Jour du mois (1-31)">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" id="btn-submit">
+                    <i data-lucide="check"></i>
+                    <span id="btn-submit-text">Ajouter</span>
+                </button>
+                <button class="btn-secondary" id="btn-cancel">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <button class="btn-add" id="btn-show-form">
+            <i data-lucide="plus"></i>
+            Ajouter un prélèvement
+        </button>
+
+        <div class="prelevement-list" id="prelevement-list"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        let prelevements = [];
+        let editingId = null;
+
+        // Charger les données
+        function loadData() {
+            const stored = localStorage.getItem('prelevements');
+            if (stored) {
+                prelevements = JSON.parse(stored);
+            }
+        }
+
+        // Sauvegarder les données
+        function saveData() {
+            localStorage.setItem('prelevements', JSON.stringify(prelevements));
+        }
+
+        // Obtenir le mois actuel
+        function getCurrentMonth() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        // Afficher le mois actuel
+        function displayCurrentMonth() {
+            const now = new Date();
+            const options = { month: 'long', year: 'numeric' };
+            document.getElementById('current-month').textContent = 
+                now.toLocaleDateString('fr-FR', options);
+        }
+
+        // Afficher/Masquer le formulaire
+        document.getElementById('btn-show-form').addEventListener('click', () => {
+            document.getElementById('form-container').classList.add('active');
+            document.getElementById('btn-show-form').style.display = 'none';
+        });
+
+        document.getElementById('btn-cancel').addEventListener('click', () => {
+            resetForm();
+        });
+
+        function resetForm() {
+            document.getElementById('input-nom').value = '';
+            document.getElementById('input-montant').value = '';
+            document.getElementById('input-jour').value = '';
+            document.getElementById('form-container').classList.remove('active');
+            document.getElementById('btn-show-form').style.display = 'flex';
+            document.getElementById('form-title').textContent = 'Nouveau prélèvement';
+            document.getElementById('btn-submit-text').textContent = 'Ajouter';
+            editingId = null;
+        }
+
+        // Ajouter/Modifier un prélèvement
+        document.getElementById('btn-submit').addEventListener('click', () => {
+            const nom = document.getElementById('input-nom').value;
+            const montant = parseFloat(document.getElementById('input-montant').value);
+            const jour = parseInt(document.getElementById('input-jour').value);
+
+            if (!nom || !montant || !jour) {
+                alert('Merci de remplir tous les champs');
+                return;
+            }
+
+            if (editingId) {
+                // Modifier
+                const index = prelevements.findIndex(p => p.id === editingId);
+                if (index !== -1) {
+                    prelevements[index] = { ...prelevements[index], nom, montant, jour };
+                }
+            } else {
+                // Ajouter
+                const newPrelevement = {
+                    id: Date.now(),
+                    nom,
+                    montant,
+                    jour,
+                    paye: {}
+                };
+                prelevements.push(newPrelevement);
+            }
+
+            saveData();
+            resetForm();
+            render();
+        });
+
+        // Basculer le statut payé
+        function togglePaye(id) {
+            const moisActuel = getCurrentMonth();
+            const prelevement = prelevements.find(p => p.id === id);
+            if (prelevement) {
+                if (!prelevement.paye[moisActuel]) {
+                    prelevement.paye[moisActuel] = true;
+                } else {
+                    prelevement.paye[moisActuel] = false;
+                }
+                saveData();
+                render();
+            }
+        }
+
+        // Modifier un prélèvement
+        function editPrelevement(id) {
+            const prelevement = prelevements.find(p => p.id === id);
+            if (prelevement) {
+                document.getElementById('input-nom').value = prelevement.nom;
+                document.getElementById('input-montant').value = prelevement.montant;
+                document.getElementById('input-jour').value = prelevement.jour;
+                document.getElementById('form-container').classList.add('active');
+                document.getElementById('btn-show-form').style.display = 'none';
+                document.getElementById('form-title').textContent = 'Modifier le prélèvement';
+                document.getElementById('btn-submit-text').textContent = 'Modifier';
+                editingId = id;
+            }
+        }
+
+        // Supprimer un prélèvement
+        function deletePrelevement(id) {
+            if (confirm('Supprimer ce prélèvement ?')) {
+                prelevements = prelevements.filter(p => p.id !== id);
+                saveData();
+                render();
+            }
+        }
+
+        // Rendre l'interface
+        function render() {
+            const moisActuel = getCurrentMonth();
+            const aujourdhui = new Date().getDate();
+            
+            // Trier par jour
+            const prelevementsTries = [...prelevements].sort((a, b) => a.jour - b.jour);
+
+            // Calculer les totaux
+            const totalMois = prelevements.reduce((sum, p) => sum + p.montant, 0);
+            const totalPaye = prelevements
+                .filter(p => p.paye[moisActuel])
+                .reduce((sum, p) => sum + p.montant, 0);
+            const totalRestant = totalMois - totalPaye;
+
+            document.getElementById('total-month').textContent = totalMois.toFixed(2);
+            document.getElementById('total-paid').textContent = totalPaye.toFixed(2);
+            document.getElementById('total-remaining').textContent = totalRestant.toFixed(2);
+
+            // Afficher la liste
+            const listContainer = document.getElementById('prelevement-list');
+            
+            if (prelevements.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        Aucun prélèvement enregistré. Commence par en ajouter un !
+                    </div>
+                `;
+            } else {
+                listContainer.innerHTML = prelevementsTries.map(p => {
+                    const estPaye = p.paye[moisActuel];
+                    const estPasse = p.jour < aujourdhui;
+                    
+                    return `
+                        <div class="prelevement-item ${estPaye ? 'paid' : ''}">
+                            <div class="checkbox ${estPaye ? 'checked' : ''}" onclick="togglePaye(${p.id})">
+                                ${estPaye ? '<i data-lucide="check"></i>' : ''}
+                            </div>
+                            <div class="prelevement-info">
+                                <div class="prelevement-name ${estPaye ? 'paid' : ''}">
+                                    ${p.nom}
+                                    ${estPasse && !estPaye ? '<span class="badge">En retard</span>' : ''}
+                                </div>
+                                <div class="prelevement-details">
+                                    <span><i data-lucide="calendar"></i> Le ${p.jour}</span>
+                                    <span class="prelevement-amount">${p.montant.toFixed(2)}€</span>
+                                </div>
+                            </div>
+                            <div class="prelevement-actions">
+                                <button class="btn-icon edit" onclick="editPrelevement(${p.id})">
+                                    <i data-lucide="edit-2"></i>
+                                </button>
+                                <button class="btn-icon delete" onclick="deletePrelevement(${p.id})">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                lucide.createIcons();
+            }
+        }
+
+        // Exposer les fonctions globalement
+        window.togglePaye = togglePaye;
+        window.editPrelevement = editPrelevement;
+        window.deletePrelevement = deletePrelevement;
+
+        // Initialiser
+        loadData();
+        displayCurrentMonth();
+        render();
+    </script>
+</body>
+</html>
